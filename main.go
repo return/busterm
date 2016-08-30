@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -10,14 +11,13 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"errors"
-	
+
 	"github.com/PuerkitoBio/goquery"
 )
 
 var (
 	// flag variables.
-	api  = flag.Bool("api", false, "launches the api")
+	api  = flag.Bool("api", false, "launch the api")
 	help = flag.Bool("h", false, "this help")
 
 	// json errors.
@@ -99,36 +99,33 @@ func parse(gs *goquery.Document) []Bus {
 		// ...and append a completed bus on each iteration.
 		buses = append(buses, bus)
 	})
-	//fmt.Println(buses)
-	// Chop the first element off. (Its the table heading.)
+	// Chop the first element off. (First element is the table heading)
 	return buses[1:]
 }
 
+// getBuses fetches an array of buses by scraping from Yorkshire Buses.
 func getBuses(ref string) ([]Bus, error) {
-	// Make our very own HTTP client struct and header.
-	// This allows us to add cookies to the client. Needed for login.
+	// Make our very own HTTP client.
 	client := &http.Client{}
-	
+
+	// Make custom useragent for the request.
 	ua := "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.17 Safari/537.36"
-	
-	req,  err := http.NewRequest("GET", baseurl + "?stopRef=" + ref, nil)
+	req, err := http.NewRequest("GET", baseurl+"?stopRef="+ref, nil)
 	if err != nil {
 		fmt.Println(err)
 	}
-	
+
+	// Add user-agent for the request.
 	req.Header.Add("User-Agent", ua)
-	
-	res, perr := client.Do(req) // Execute LOGIN request.
+
+	res, perr := client.Do(req) // Execute login request.
 	if perr != nil {
 		return []Bus{}, err
 	} else if res.StatusCode != 200 {
 		return []Bus{}, errors.New("status != 200: status:" + res.Status)
 	}
-	
-	// Get new document from yorkshire.acisconnect.com
-	// TODO: GoQuery does not handle useragents. It may be helpful to add one.
-	// Hint: You need a new HTTP Client to do this.
-	// Hint 2: after that you might want to change to NewDocumentFromNode or NewDocumentFromReader.
+
+	// Get a new HMTL document from yorkshire.acisconnect.com
 	document, err := goquery.NewDocumentFromReader(res.Body)
 	if err != nil {
 		return []Bus{}, err
@@ -139,7 +136,7 @@ func getBuses(ref string) ([]Bus, error) {
 	return buses, nil
 }
 
-// API launches the API.
+// API launches the gotimetravel API server.
 func API(ref string) {
 	// Create /check_buses route for our server.
 	http.HandleFunc("/check_buses", func(w http.ResponseWriter, r *http.Request) {
@@ -171,7 +168,7 @@ func API(ref string) {
 	// TODO: For production usecases change 'localhost' to 7654.
 	// Only do this when deploying on a real server.
 	port := "7654"
-	fmt.Println("busdepartures API is up on port :" + port)
+	fmt.Println("gotimetravel API is up on port :" + port)
 	http.ListenAndServe("localhost:"+port, nil)
 }
 
@@ -189,7 +186,7 @@ func main() {
 
 	// Help docs.
 	if *help == true {
-		fmt.Println("busdepartures help")
+		fmt.Println("gotimetravel help")
 		flag.PrintDefaults()
 		os.Exit(0)
 	}
@@ -214,10 +211,3 @@ func main() {
 		fmt.Println(bus)
 	}
 }
-
-
-
-
-
-
-
