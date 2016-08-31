@@ -5,6 +5,15 @@ If you have Go installed:
 
 `go get github.com/return/gotimetravel`
 
+TODO:
+
+- [ ] Refine API (with parameters.)
+- [ ] Postcode2NapTAN
+- [ ]  Enhanced terminal interface.
+  - [ ] colours!
+  - [ ] TUI
+- [ ] Real time updates!
+
 ### Usage
 ```
 gotimetravel help
