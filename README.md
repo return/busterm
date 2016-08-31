@@ -10,6 +10,7 @@ TODO:
 - [ ] Refine API (with parameters.)
 - [ ] Postcode2NapTAN
 - [ ]  Enhanced terminal interface.
+  - [ ] form entry
   - [ ] colours!
   - [ ] TUI
 - [ ] Real time updates!
