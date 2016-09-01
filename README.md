@@ -1,27 +1,36 @@
+
 # gotimetravel
 View all the NapTAN buses directly in realtime in the terminal!
 
+![](preview.png)
+
 If you have Go installed:
 
-`go get github.com/return/gotimetravel`
+`$ go get github.com/return/gotimetravel`
+
+Release binaries will be available soon.
 
 TODO:
 
-- [ ] Refine API (with parameters.)
-- [ ] Postcode2NapTAN
-- [ ]  Enhanced terminal interface.
-  - [ ] form entry
-  - [ ] colours!
-  - [ ] TUI
-- [ ] Real time updates!
+- [x] Refine API (with parameters.)
+- [x]  Enhanced terminal interface.
+  - [x] colours!
+  - [ish] TUI.
+- [ish] Real time updates!
+- [ ] Configurable intervals.
+- [ ] Form entry.
+- [ ] Postcode2NapTAN.
 
 ### Usage
 ```
-gotimetravel help
-  -api
-    	launch the api
-  -h	this help
+Usage:
+	gotimetravel [-t] -n <code> | --naptan <code> [<interval>] 
+	gotimetravel -a | --api
+	gotimetravel -h | --help
+	gotimetravel --version
 ```
 
 ### License
 MIT
+
+

@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,18 +12,33 @@ import (
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/docopt/docopt-go"
+	"gopkg.in/ukautz/clif.v1"
 )
 
-var (
-	// flag variables.
-	api  = flag.Bool("api", false, "launch the api")
-	help = flag.Bool("h", false, "this help")
+var usage = `gotimetravel
 
+View all the NapTAN buses directly in realtime in the terminal!
+
+Usage:
+	gotimetravel [-t] -n <code> | --naptan <code> [<interval>] 
+	gotimetravel -a | --api
+	gotimetravel -h | --help
+	gotimetravel --version
+
+Options:
+	-h --help     Show this screen.
+	--version     Show version.`
+
+var (
 	// json errors.
-	unable = `{"error":"unable to fetch buses."}`
+	unable        = `{"error":"unable to fetch buses."}`
+	invalidNaptan = `{"error":"NapTAN code must be an 8 digit number."}`
 
 	// baseurl.
 	baseurl = "http://yorkshire.acisconnect.com/Text/WebDisplay.aspx"
+
+	unwantedRunes = "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ;:\\'\"{[}]\\|+=-_)(*&^%$#@!~`<>?"
 )
 
 // Bus struct holds information about a Bus from Yorkshire Buses.
@@ -137,18 +151,27 @@ func getBuses(ref string) ([]Bus, error) {
 }
 
 // API launches the gotimetravel API server.
-func API(ref string) {
+func API() {
 	// Create /check_buses route for our server.
 	http.HandleFunc("/check_buses", func(w http.ResponseWriter, r *http.Request) {
-		log.Println(r) // TODO: Logging looks ugly, change at will.
-
 		// Add headers.
 		w.Header().Add("Accept", "application/json")
 		w.Header().Add("Content-Type", "application/json")
+		log.Println(r) // TODO: Logging looks ugly, change at will.
+
+		// Get hte naptan code.
+		code := r.URL.Query().Get("naptan")
+		err := checkCode(code)
+		if err != nil {
+			w.WriteHeader(400)
+			fmt.Fprintf(w, string(invalidNaptan))
+			return
+		}
 
 		// Get Buses.
-		buses, err := getBuses(ref)
+		buses, err := getBuses(code)
 		if err != nil {
+			w.WriteHeader(400)
 			fmt.Fprintf(w, string(unable))
 			return
 		}
@@ -156,10 +179,11 @@ func API(ref string) {
 		// Turn buses into JSON.
 		data, err := json.Marshal(buses)
 		if err != nil {
+			w.WriteHeader(400)
 			fmt.Fprintf(w, string(unable))
 			return
 		}
-
+		w.WriteHeader(200)
 		fmt.Fprintf(w, string(data))
 		return
 	})
@@ -172,42 +196,144 @@ func API(ref string) {
 	http.ListenAndServe("localhost:"+port, nil)
 }
 
-func main() {
-	// Command Line Flags.
-	flag.Parse()
+// PrintBus prints an estimated measure of how close the bus is from the bus stop.
+func PrintBus(timestring string, doubledecker bool) string {
+	// Emojis for buses.
+	var bus string = "🚌"
+	var stop string = "🚏"
+	var emoji string
+	// roads or (_) for the bus.
+	var roads int
+	// time unit default is 12.
+	var unit int = 12
+	// converted time and current time.
+	var convtime time.Time
+	now := time.Now()
 
-	// Reference code. TODO: (Hardcoded) Can be changed.
-	ref := "22001688"
-
-	// Serve the API.
-	if *api == true {
-		API(ref)
+	// Check if its a double decker bus.
+	if doubledecker == true {
+		// Until a double decker bus is introduced into the unicode standard,
+		// this one will suffice.
+		bus = "🚐"
 	}
-
-	// Help docs.
-	if *help == true {
-		fmt.Println("gotimetravel help")
-		flag.PrintDefaults()
-		os.Exit(0)
+	// format the date as '2006-01-02'
+	fmtdate := (func() string {
+		var specifier string
+		y, m, d := time.Now().Date()
+		if m < 10 {
+			specifier = "%d-0%d-%d"
+		}
+		if d < 10 {
+			specifier = "%d-%d-0%d"
+		}
+		if d < 10 && m < 10 {
+			specifier = "%d-0%d-0%d"
+		}
+		return fmt.Sprintf(specifier, y, m, d)
+	})
+	// check if the string does not have a colon (:)
+	tt := strings.Fields(timestring)[0]
+	if strings.ContainsAny(tt, ":") != true {
+		// append "m" (minutes) since the time is in minutes.
+		i, _ := time.ParseDuration(tt + "m")
+		convtime = now.Add(i)
+		// append "m" (minutes) since the time is in minutes.
+		unit = 5
+	} else {
+		// parse the time.
+		parsedtime, _ := time.Parse("2006-01-02 15:04", fmtdate()+" "+tt)
+		convtime = parsedtime
 	}
-
-	// Get Buses.
-	buses, err := getBuses(ref)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+	// check if the units is 5 minutes or 12 hours
+	// This is needed to check how close the bus is from the bus stop depending on the units
+	if unit == 5 {
+		roads = int(convtime.Sub(now).Minutes()) / unit
+	} else {
+		roads = int(convtime.Sub(now).Hours()) % unit
 	}
+	// Is the bus "Due"? or is the time less than 5 minutes?
+	if roads <= 0 {
+		return fmt.Sprintf("%s\r", "_"+strings.Repeat("_", 0)+bus+strings.Repeat("_", unit))
+	}
+	// Assuming bus is still on its way only print bus stop for Buses which have no time colon.
+	if strings.ContainsAny(tt, ":") {
+		emoji = fmt.Sprintf("%s\r", "_"+strings.Repeat("_", int(roads))+bus+strings.Repeat("_", unit))
+	} else {
+		emoji = fmt.Sprintf("%s\r", "_"+stop+strings.Repeat("_", int(roads))+bus+strings.Repeat("_", unit))
+	}
+	return emoji
+}
+
+// PrintTable
+func PrintTable(bus []Bus, ref string) {
+	c := clif.NewColorOutput(os.Stdin)
+	headers := []string{"Bus", "To", "Time", "Emoji", "Double Decker"}
+	rows := make([][]string, 0)
+	for _, b := range bus {
+		s := []string{
+			strconv.Itoa(b.Service),
+			"<warn>" + b.To + "<reset>",
+			b.Time,
+			PrintBus(b.Time, b.DoubleDecker),
+			strconv.FormatBool(b.DoubleDecker),
+		}
+		rows = append(rows, s)
+	}
+	table := c.Table(headers, clif.OpenTableStyleLight)
+	table.AddRows(rows)
 
 	// Parse current time in simple form. (3:04PM)
 	now := time.Now().Format(time.Kitchen)
+	// Print the timetable with time and stop reference.
+	c.Printf("\x0cDeparture information for at " + "<query>" + now + "<reset>\n")
+	c.Printf("\x0cStop Ref: <headline>%s<reset>\n\n%s\nNext update in 30 seconds\n\n", ref, table.Render())
+}
 
-	// Print timetable with time and stop reference.
-	fmt.Println("Departure information for at " + now)
-	fmt.Println("Stop Ref: " + ref)
-	fmt.Println("------------------------------------")
+// checkCode checks if the NapTAN is valid.
+func checkCode(code string) error {
+	if len(code) != 8 || strings.ContainsAny(code, unwantedRunes) {
+		return errors.New("NapTAN code must be an <error>8 digit number.<reset>\n")
+	}
+	return nil
+}
 
-	// Print timetable.
-	for _, bus := range buses {
-		fmt.Println(bus)
+func main() {
+	// Parse arguments.
+	var ref string
+	c := clif.NewColorOutput(os.Stdin)
+	arguments, _ := docopt.Parse(usage, nil, true, "gotimetravel", false)
+
+	// Check NapTAN option.
+	if arguments["-n"] == true || arguments["--naptan"] == true {
+		code := arguments["<code>"].(string)
+		err := checkCode(code)
+		if err != nil {
+			c.Printf(err.Error())
+			os.Exit(1)
+		}
+		ref = code
+		if arguments["-t"] == true {
+			for {
+				buses, err := getBuses(ref)
+				if err != nil {
+					c.Printf("<error>%s<reset>\n", err)
+					os.Exit(1)
+				}
+				PrintTable(buses, ref)
+				time.Sleep(30 * time.Second)
+			}
+		}
+		// Get Buses.
+		buses, err := getBuses(ref)
+		if err != nil {
+			c.Printf("<error>%s<reset>\n", err)
+			os.Exit(1)
+		}
+		PrintTable(buses, ref)
+	}
+
+	// Serve the API.
+	if arguments["-a"] == true || arguments["--api"] == true {
+		API()
 	}
 }
