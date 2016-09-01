@@ -199,13 +199,13 @@ func API() {
 // PrintBus prints an estimated measure of how close the bus is from the bus stop.
 func PrintBus(timestring string, doubledecker bool) string {
 	// Emojis for buses.
-	var bus string = "🚌"
-	var stop string = "🚏"
+	var bus = "🚌"
+	var stop = "🚏"
 	var emoji string
 	// roads or (_) for the bus.
 	var roads int
 	// time unit default is 12.
-	var unit int = 12
+	var unit = 12
 	// converted time and current time.
 	var convtime time.Time
 	now := time.Now()
@@ -264,11 +264,13 @@ func PrintBus(timestring string, doubledecker bool) string {
 	return emoji
 }
 
-// PrintTable
+// PrintTable prints the timetable to the screen.
 func PrintTable(bus []Bus, ref string) {
 	c := clif.NewColorOutput(os.Stdin)
+	// Headers and Rows.
 	headers := []string{"Bus", "To", "Time", "Emoji", "Double Decker"}
-	rows := make([][]string, 0)
+	rows := [][]string{}
+	// Loop over the Buses and append them to the rows.
 	for _, b := range bus {
 		s := []string{
 			strconv.Itoa(b.Service),
