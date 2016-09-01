@@ -288,7 +288,8 @@ func PrintTable(bus []Bus, ref string) {
 	now := time.Now().Format(time.Kitchen)
 	// Print the timetable with time and stop reference.
 	c.Printf("\x0cDeparture information for at " + "<query>" + now + "<reset>\n")
-	c.Printf("\x0cStop Ref: <headline>%s<reset>\n\n%s\nNext update in 30 seconds\n\n", ref, table.Render())
+	c.Printf("\nLegend: \n🚏 : Bus Stop \n🚌 : Normal Bus\n🚐 : Double Decker Bus\n")
+	c.Printf("\x0cStop Ref: <headline>%s<reset>\n\n%s\n", ref, table.Render())
 }
 
 // checkCode checks if the NapTAN is valid.
@@ -322,6 +323,7 @@ func main() {
 					os.Exit(1)
 				}
 				PrintTable(buses, ref)
+				fmt.Printf("Next update in 30 seconds\n\n")
 				time.Sleep(30 * time.Second)
 			}
 		}
