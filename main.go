@@ -159,7 +159,7 @@ func API() {
 		// Add headers.
 		w.Header().Add("Accept", "application/json")
 		w.Header().Add("Content-Type", "application/json")
-		logger.Println(r.Method, r.Host, req.RequestURI) // GET (host) endpoint/params
+		logger.Println(r.Method, r.Host, r.RequestURI) // GET (host) endpoint/params
 
 		// Get the naptan code.
 		code := r.URL.Query().Get("naptan")
