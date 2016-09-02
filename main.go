@@ -152,14 +152,16 @@ func getBuses(ref string) ([]Bus, error) {
 
 // API launches the gotimetravel API server.
 func API() {
+	// Create a logger for the server endpoints.
+	logger := log.New(os.Stdout, "", log.Ldate)
 	// Create /check_buses route for our server.
 	http.HandleFunc("/check_buses", func(w http.ResponseWriter, r *http.Request) {
 		// Add headers.
 		w.Header().Add("Accept", "application/json")
 		w.Header().Add("Content-Type", "application/json")
-		log.Println(r) // TODO: Logging looks ugly, change at will.
+		logger.Println(r.Method, r.Host, req.RequestURI) // GET (host) endpoint/params
 
-		// Get hte naptan code.
+		// Get the naptan code.
 		code := r.URL.Query().Get("naptan")
 		err := checkCode(code)
 		if err != nil {
