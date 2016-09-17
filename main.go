@@ -289,9 +289,9 @@ func PrintTable(bus []Bus, ref string) {
 	// Parse current time in simple form. (3:04PM)
 	now := time.Now().Format(time.Kitchen)
 	// Print the timetable with time and stop reference.
-	c.Printf("\x0cDeparture information for at " + "<query>" + now + "<reset>\n")
-	c.Printf("\nLegend: \n🚏 : Bus Stop \n🚌 : Normal Bus\n🚐 : Double Decker Bus\n")
-	c.Printf("\x0cStop Ref: <headline>%s<reset>\n\n%s\n", ref, table.Render())
+	c.Printf("\rDeparture information for at " + "<query>" + now + "<reset>\n")
+	c.Printf("\r\nLegend: \n🚏 : Bus Stop \n🚌 : Normal Bus\n🚐 : Double Decker Bus\n")
+	c.Printf("\rStop Ref: <headline>%s<reset>\n\n%s\n", ref, table.Render())
 }
 
 // checkCode checks if the NapTAN is valid.
@@ -318,15 +318,20 @@ func main() {
 		}
 		ref = code
 		if arguments["-t"] == true {
+			fmt.Print("\033[2J")
 			for {
 				buses, err := getBuses(ref)
 				if err != nil {
 					c.Printf("<error>%s<reset>\n", err)
 					os.Exit(1)
 				}
+				// Clear the screen and print table.
+				// Remove any previous messages and wait 30 seconds.
+				c.Printf("\033[1;1H")
 				PrintTable(buses, ref)
-				fmt.Printf("Next update in 30 seconds\n\n")
+				fmt.Printf("\r           \r")
 				time.Sleep(30 * time.Second)
+				fmt.Printf("\rUpdating...")
 			}
 		}
 		// Get Buses.
