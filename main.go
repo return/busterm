@@ -38,6 +38,7 @@ var (
 	// baseurl.
 	baseurl = "http://yorkshire.acisconnect.com/Text/WebDisplay.aspx"
 
+	// basic input validation. (unwanted characters in haystack)
 	unwantedRunes = "aAbBcCdDeEfFgGhHiIjJkKlLmMnNoOpPqQrRsStTuUvVwWxXyYzZ;:\\'\"{[}]\\|+=-_)(*&^%$#@!~`<>?"
 )
 
