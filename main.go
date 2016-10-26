@@ -16,15 +16,15 @@ import (
 	"gopkg.in/ukautz/clif.v1"
 )
 
-var usage = `gotimetravel
+var usage = `busterm
 
 View all the NapTAN buses directly in realtime in the terminal!
 
 Usage:
-	gotimetravel [-t] -n <code> | --naptan <code> [<interval>] 
-	gotimetravel -a | --api
-	gotimetravel -h | --help
-	gotimetravel --version
+	busterm [-t] -n <code> | --naptan <code> [<interval>] 
+	busterm -a | --api
+	busterm -h | --help
+	busterm --version
 
 Options:
 	-h --help     Show this screen.
@@ -150,7 +150,7 @@ func getBuses(ref string) ([]Bus, error) {
 	return buses, nil
 }
 
-// API launches the gotimetravel API server.
+// API launches the busterm API server.
 func API() {
 	// Create a logger for the server endpoints.
 	logger := log.New(os.Stdout, "", log.Ldate)
@@ -194,7 +194,7 @@ func API() {
 	// TODO: For production usecases change 'localhost' to 7654.
 	// Only do this when deploying on a real server.
 	port := "7654"
-	fmt.Println("gotimetravel API is up on port :" + port)
+	fmt.Println("busterm API is up on port :" + port)
 	http.ListenAndServe("localhost:"+port, nil)
 }
 
@@ -306,7 +306,7 @@ func main() {
 	// Parse arguments.
 	var ref string
 	c := clif.NewColorOutput(os.Stdin)
-	arguments, _ := docopt.Parse(usage, nil, true, "gotimetravel", false)
+	arguments, _ := docopt.Parse(usage, nil, true, "busterm", false)
 
 	// Check NapTAN option.
 	if arguments["-n"] == true || arguments["--naptan"] == true {

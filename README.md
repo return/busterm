@@ -1,12 +1,12 @@
 
-# gotimetravel
+# busterm
 View all the NapTAN buses directly in realtime in the terminal!
 
 ![](preview.png)
 
 If you have Go installed:
 
-`$ go get github.com/return/gotimetravel`
+`$ go get github.com/return/busterm`
 
 Release binaries will be available soon.
 
@@ -24,10 +24,10 @@ TODO:
 ### Usage
 ```
 Usage:
-	gotimetravel [-t] -n <code> | --naptan <code> [<interval>] 
-	gotimetravel -a | --api
-	gotimetravel -h | --help
-	gotimetravel --version
+	busterm [-t] -n <code> | --naptan <code> [<interval>] 
+	busterm -a | --api
+	busterm -h | --help
+	busterm --version
 ```
 
 ### License
