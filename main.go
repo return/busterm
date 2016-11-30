@@ -139,6 +139,9 @@ func getBuses(ref string) ([]Bus, error) {
 	} else if res.StatusCode != 200 {
 		return []Bus{}, errors.New("status != 200: status:" + res.Status)
 	}
+	
+	// Close response body.
+	defer res.Body.Close()
 
 	// Get a new HMTL document from yorkshire.acisconnect.com
 	document, err := goquery.NewDocumentFromReader(res.Body)
