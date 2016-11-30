@@ -44,7 +44,7 @@ var (
 
 // Bus struct holds information about a Bus from Yorkshire Buses.
 type Bus struct {
-	Service      int    `json:"bus"`
+	Service      string `json:"bus"`
 	To           string `json:"to"`
 	Time         string `json:"time"`
 	DoubleDecker bool   `json:"double_decker"`
@@ -56,16 +56,16 @@ func (bus Bus) String() string {
 
 	// Check if the time has the "Due" string.
 	if bus.Time == "Due" {
-		str = fmt.Sprintf("Bus %d going to %s is %s", bus.Service, bus.To, bus.Time)
+		str = fmt.Sprintf("Bus %s going to %s is %s", bus.Service, bus.To, bus.Time)
 		return str
 	}
 
 	// Check if the time has a colon seperator.
 	if strings.ContainsAny(bus.Time, ":") == true {
-		str = fmt.Sprintf("Bus %d going to %s @ %s", bus.Service, bus.To, bus.Time)
+		str = fmt.Sprintf("Bus %s going to %s @ %s", bus.Service, bus.To, bus.Time)
 		return str
 	}
-	str = fmt.Sprintf("Bus %d going to %s in %s", bus.Service, bus.To, bus.Time)
+	str = fmt.Sprintf("Bus %s going to %s in %s", bus.Service, bus.To, bus.Time)
 	return str
 }
 
@@ -91,8 +91,7 @@ func parse(gs *goquery.Document) []Bus {
 			// 3 = Low Floor (Small Bus)
 			switch x {
 			case 0:
-				service, _ := strconv.Atoi(t.Text()) // should really check for error here.
-				bus.Service = service
+				bus.Service = t.Text()
 				break
 			case 1:
 				bus.To = t.Text()
@@ -139,7 +138,7 @@ func getBuses(ref string) ([]Bus, error) {
 	} else if res.StatusCode != 200 {
 		return []Bus{}, errors.New("status != 200: status:" + res.Status)
 	}
-	
+
 	// Close response body.
 	defer res.Body.Close()
 
@@ -279,7 +278,7 @@ func PrintTable(bus []Bus, ref string) {
 	// Loop over the Buses and append them to the rows.
 	for _, b := range bus {
 		s := []string{
-			strconv.Itoa(b.Service),
+			b.Service,
 			"<warn>" + b.To + "<reset>",
 			b.Time,
 			PrintBus(b.Time, b.DoubleDecker),
